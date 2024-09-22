@@ -1,0 +1,3 @@
+[ramses-hydro]
+fields=["Density", "x-velocity", "y-velocity", "z-velocity",
+"Pressure", "metallicity", "H2-fraction", "HII-fraction", "HeII-fraction", "HeIII-fraction", "refinement_param"]
