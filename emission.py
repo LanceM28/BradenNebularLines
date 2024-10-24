@@ -121,3 +121,4 @@ def get_line_emission(idx, dens_normalized):
 
         return interp_val
     return copy.deepcopy(_line_emission)
+
