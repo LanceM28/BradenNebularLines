@@ -107,6 +107,10 @@ def get_line_emission(idx, dens_normalized):
     
         tup = np.stack((Uadj, Nadj, Tadj), axis=-1)
 
+        size  = Nadj.size
+        # Testing with constant U, T -> density variation
+        #tup = np.stack(([0.0]*size, Nadj, [5.0]*size), axis=-1)
+
         # Return interpolated values weighted by metallicity
         # for non-Hydrogen and Helium lines
         interp_val = interpolator(tup)
