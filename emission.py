@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib as plt
 from scipy.interpolate import RegularGridInterpolator
+import copy
 import yt
 
 # Read line emission data (line list, run params)
@@ -46,12 +47,6 @@ for i in range(ncols):
     cub[i]=np.reshape(ll[i,:], d)
     #print(cub[i].shape)
 
-# normalize by the density squared
-#for i in np.arange(dimN):
-#    for j in np.arange(ncols):
-#    cub[j,:,i,:]=cub[j,:,i,:]/10**(2*logn[i])
-#    #cub[j,:,i,:]=cub[j,:,i,:]
-
 # Interpolation
 # list of interpolators (for each emission line)
 interpolator = [None]*ncols
@@ -59,5 +54,70 @@ interpolator = [None]*ncols
 for i in np.arange(ncols):
   interpolator[i] = RegularGridInterpolator((logU, logN, logT), cub[i])
 
-def get_interpolator(lineidx):
+# normalize by the density squared
+dens_normalized_cub = cub.copy()
+
+for i in np.arange(dimN):
+    for j in np.arange(ncols):
+      dens_normalized_cub[j,:,i,:]=dens_normalized_cub[j,:,i,:]/10**(2*logN[i])
+      #dens_normalized_cub[j,:,i,:]=dens_normalized_cub[j,:,i,:]
+
+# Density Squared Normalized Interpolators
+dens_normalized_interpolator = [None]*ncols
+
+for i in np.arange(ncols):
+  dens_normalized_interpolator[i] = RegularGridInterpolator((logU, logN, logT), cub[i])
+
+# Get an interpolator which either returns the intensity erg cm^-2 s^-1
+# or normalized by the density squared
+def get_interpolator(lineidx, dens_normalized):
+    if dens_normalized:
+       return dens_normalized_interpolator[lineidx]
     return interpolator[lineidx]
+
+# Returns a function for line emission of index idx;
+# Allows for the batch creation of intensity fields
+# for a variety of lines
+def get_line_emission(idx, dens_normalized):
+    def _line_emission(field, data):
+        interpolator=get_interpolator(idx, dens_normalized)
+
+        # Change to log values
+        U_val = data['gas', 'ion-param'].value
+        N_val = data['gas', 'number_density'].value
+        T_val = data['gas', 'temperature'].value
+
+        # Cut off negative temperatures
+        T_val = np.where(T_val < 0.0, 10e-4, T_val)
+
+        U = np.log10(U_val)
+        N = np.log10(N_val)
+        T = np.log10(T_val)
+
+        # Adjust log values to within bounds supported by
+        # interpolation table
+        Uadj = np.where(U < minU, minU, U)
+        Uadj = np.where(Uadj > maxU, maxU, Uadj)
+
+        Nadj = np.where(N < minN, minN, N)
+        Nadj = np.where(Nadj > maxN, maxN, Nadj)
+
+        Tadj = np.where(T < minT, minT, T)
+        Tadj = np.where(Tadj > maxT, maxT, Tadj)
+    
+        tup = np.stack((Uadj, Nadj, Tadj), axis=-1)
+
+        # Return interpolated values weighted by metallicity
+        # for non-Hydrogen and Helium lines
+        interp_val = interpolator(tup)
+
+        if idx not in [0, 10]:
+           interp_val = interp_val*data['gas', 'metallicity']
+
+        if dens_normalized:
+           # make sure to weight field with number_density as well
+           interp_val = interp_val*data['gas', 'number_density'] 
+           #interp_val = interp_val*data['gas', 'number_density']**2
+
+        return interp_val
+    return copy.deepcopy(_line_emission)
