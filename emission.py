@@ -119,9 +119,9 @@ def get_line_emission(idx, dens_normalized):
            interp_val = interp_val*data['gas', 'metallicity']
 
         if dens_normalized:
-           # make sure to weight field with number_density as well
-           interp_val = interp_val*data['gas', 'number_density'] 
-           #interp_val = interp_val*data['gas', 'number_density']**2
+           interp_val = interp_val*data['gas', 'number_density']**2
+        else:
+           interp_val = interp_val*data['gas', 'number_density']/data['gas', 'number_density']
 
         return interp_val
     return copy.deepcopy(_line_emission)
