@@ -58,15 +58,16 @@ for i in np.arange(ncols):
 dens_normalized_cub = cub.copy()
 
 for i in np.arange(dimN):
-    for j in np.arange(ncols):
-      dens_normalized_cub[j,:,i,:]=dens_normalized_cub[j,:,i,:]/10**(2*logN[i])
+    dens_normalized_cub[:,:,i,:]=dens_normalized_cub[:,:,i,:]/10**(2*logN[i])
+    #for j in np.arange(ncols):
+      #dens_normalized_cub[j,:,i,:]=dens_normalized_cub[j,:,i,:]/10**(2*logN[i])
       #dens_normalized_cub[j,:,i,:]=dens_normalized_cub[j,:,i,:]
 
 # Density Squared Normalized Interpolators
 dens_normalized_interpolator = [None]*ncols
 
 for i in np.arange(ncols):
-  dens_normalized_interpolator[i] = RegularGridInterpolator((logU, logN, logT), cub[i])
+  dens_normalized_interpolator[i] = RegularGridInterpolator((logU, logN, logT), dens_normalized_cub[i])
 
 # Get an interpolator which either returns the intensity erg cm^-2 s^-1
 # or normalized by the density squared
@@ -115,14 +116,17 @@ def get_line_emission(idx, dens_normalized):
         # for non-Hydrogen and Helium lines
         interp_val = interpolator(tup)
 
-        if idx not in [0, 10]:
-           interp_val = interp_val*data['gas', 'metallicity']
+        #if idx not in [0, 10]:
+        #   interp_val = interp_val*data['gas', 'metallicity']
 
         if dens_normalized:
            interp_val = interp_val*data['gas', 'number_density']**2
         else:
-           interp_val = interp_val#*data['gas', 'number_density']/data['gas', 'number_density']
+           interp_val = interp_val*data['gas', 'number_density']/data['gas', 'number_density']
 
         return interp_val
     return copy.deepcopy(_line_emission)
+
+# TODO - outside index -> intensity 0
+
 
