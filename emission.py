@@ -5,7 +5,7 @@ import copy
 import yt
 
 # Read line emission data (line list, run params)
-filename='CloudyFiles/linelist.dat'
+filename='/BradenNebularLines/CloudyFiles/linelist.dat'
 minU,maxU,stepU,minN,maxN,stepN,minT,maxT,stepT=np.loadtxt(filename,unpack=True,dtype=float, max_rows=1, skiprows=5)
 print(minU,maxU,stepU,minN,maxN,stepN,minT,maxT,stepT)
 
