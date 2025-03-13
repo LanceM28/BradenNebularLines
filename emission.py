@@ -89,7 +89,7 @@ def get_line_emission(idx, dens_normalized):
         T_val = data['gas', 'temperature'].value
 
         # Cut off negative temperatures
-        T_val = np.where(T_val < 0.0, 10e-4, T_val)
+        T_val = np.where(T_val < 0.000, 10e-4, T_val)
 
         U = np.log10(U_val)
         N = np.log10(N_val)
