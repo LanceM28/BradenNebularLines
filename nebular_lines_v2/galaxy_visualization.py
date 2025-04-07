@@ -376,7 +376,6 @@ class VisualizationManager:
 
         profile = yt.create_profile(
             sp,
-            #ds.all_data(), # TODO
             [x_field, y_field],
             #n_bins=[128, 128],
             fields=[z_field],

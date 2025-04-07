@@ -47,18 +47,6 @@ filename = "/Users/bnowicki/Documents/Research/Ricotti/output_00273/info_00273.t
 # Nmin, Nmax, Nstep: -1.0 6.0 0.5
 # Tmin, Tmax, Tstop: 3.0 6.0 0.1
 
-<<<<<<< HEAD
-lines=["H1_6562.80A","O1_1304.86A","O1_6300.30A","O2_3728.80A","O2_3726.10A",
-       "O3_1660.81A","O3_1666.15A","O3_4363.21A","O3_4958.91A","O3_5006.84A", 
-       "He2_1640.41A","C2_1335.66A","C3_1906.68A","C3_1908.73A","C4_1549.00A",
-       "Mg2_2795.53A","Mg2_2802.71A","Ne3_3868.76A","Ne3_3967.47A",
-       "N5_1238.82A",
-       "N5_1242.80A","N4_1486.50A","N3_1749.67A","S2_6716.44A","S2_6730.82A"]
-
-wavelengths=[6562.80, 1304.86, 6300.30, 3728.80, 3726.10, 1660.81, 1666.15,
-             4363.21, 4958.91, 5006.84, 1640.41, 1335.66,
-             1906.68, 1908.73, 1549.00, 2795.53, 2802.71, 3868.76,
-=======
 # TODO H2
 lines=["H1_6562.80A","O1_1304.86A","O1_6300.30A","O2_3728.80A","O2_3726.10A",
        "O3_1660.81A","O3_1666.15A","O3_4363.21A","O3_4958.91A","O3_5006.84A", 
@@ -69,7 +57,6 @@ lines=["H1_6562.80A","O1_1304.86A","O1_6300.30A","O2_3728.80A","O2_3726.10A",
 wavelengths=[6562.80, 1304.86, 6300.30, 3728.80, 3726.10, 1660.81, 1666.15, \
              4363.21, 4958.91, 5006.84, 1640.41, 1335.66, \
              1906.68, 1908.73, 1549.00, 2795.53, 2802.71, 3868.76, \
->>>>>>> 0660d65 (Copy nebular_lines_v2 3-24-2025. Plan to make edits to temperature calculation.)
              3967.47, 1238.82, 1242.80, 1486.50, 1749.67, 6716.44, 6730.82]
 
 
@@ -80,10 +67,6 @@ cell_fields = [
     "z-velocity",
     "Pressure",
     "Metallicity",
-<<<<<<< HEAD
-=======
-    # "dark_matter_density",
->>>>>>> 0660d65 (Copy nebular_lines_v2 3-24-2025. Plan to make edits to temperature calculation.)
     "xHI",
     "xHII",
     "xHeII",
@@ -115,10 +98,6 @@ def _ion_param(field, data):
 
     return photon/data['gas', 'number_density']
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 0660d65 (Copy nebular_lines_v2 3-24-2025. Plan to make edits to temperature calculation.)
 def _my_temperature(field, data):
     #y(i): abundance per hydrogen atom
     XH_RAMSES=0.76 #defined by RAMSES in cooling_module.f90
@@ -150,7 +129,6 @@ def get_luminosity(line):
    return copy.deepcopy(_luminosity)
 
 
-<<<<<<< HEAD
 #number density of hydrogen atoms
 def _my_H_nuclei_density(field, data):
     dn=data["ramses","Density"].in_cgs()
@@ -179,8 +157,6 @@ def _xHeIII(field, data):
     return data['ramses', 'hydro_xHeIII']
 '''
     
-=======
->>>>>>> 0660d65 (Copy nebular_lines_v2 3-24-2025. Plan to make edits to temperature calculation.)
 '''
 Add derived fields.
 '''
@@ -188,10 +164,14 @@ Add derived fields.
 # Ionization parameter
 yt.add_field(
 <<<<<<< HEAD
+<<<<<<< HEAD
     ('gas', 'ion_param'),
 =======
     ('gas', 'ion-param'),
 >>>>>>> 0660d65 (Copy nebular_lines_v2 3-24-2025. Plan to make edits to temperature calculation.)
+=======
+    ('gas', 'ion_param'),
+>>>>>>> d673fea (Mass Change to fix automatic field definitions and test luminosity ratios for fast moving gasses)
     function=_ion_param,
     sampling_type="cell",
     units="cm**3",
@@ -341,8 +321,12 @@ field_list = [
     ('gas', 'density'),
     ('gas', 'number_density'),
     ('gas', 'my_temperature'),
+<<<<<<< HEAD
     ('gas', 'ion-param'),
 >>>>>>> 0660d65 (Copy nebular_lines_v2 3-24-2025. Plan to make edits to temperature calculation.)
+=======
+    ('gas', 'ion_param'),
+>>>>>>> d673fea (Mass Change to fix automatic field definitions and test luminosity ratios for fast moving gasses)
     ('gas', 'metallicity')
 ]
 
