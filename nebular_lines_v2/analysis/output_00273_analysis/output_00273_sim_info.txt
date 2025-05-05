@@ -1,8 +1,8 @@
-current_time: 0.3604448649237178 Gyr
+current_time: 4.311420483661945 code_time
 domain_dimensions: [64 64 64]
 domain_left_edge: [0. 0. 0.] code_length
 domain_right_edge: [1. 1. 1.] code_length
-cosmological_simulation: True
+cosmological_simulation: 1
 current_redshift: 12.171087046255657
 omega_lambda: 0.685000002384186
 omega_matter: 0.314999997615814

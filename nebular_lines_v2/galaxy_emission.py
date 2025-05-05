@@ -39,9 +39,9 @@ Setup fields in yt
 # Specify output_* folder
 #filename = sys.argv[1]
 #print(f'Line List Filepath = {filename}')
-filename = "/Users/bnowicki/Documents/Research/Ricotti/output_00273/info_00273.txt"
+filename = "/Users/lamoreau/python/ASpec/SimulationFiles/output_00273/info_00273.txt"
 
-# f1 = "/Users/bnowicki/Documents/Research/Ricotti/output_00273/info_00273.txt"
+# f1 = "/Users/lamoreau/python/ASpec/SimulationFiles/output_00273/info_00273.txt"
 # Cloudy Grid Run Bounds for this line list (log values)
 # Umin, Umax, Ustep: -6.0 1.0 0.5
 # Nmin, Nmax, Nstep: -1.0 6.0 0.5
