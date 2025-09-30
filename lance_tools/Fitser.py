@@ -3,6 +3,7 @@ from astropy.table import Table
 import numpy as np
 import scipy.interpolate as spinter
 import matplotlib.pyplot as plt
+import os
 
 #for now I am locally defining this across the board but I should make this its own thing in a file.io function library
 def searcher(start_path, dirname):
@@ -29,8 +30,8 @@ def searcher(start_path, dirname):
     else:
         print(f"No directory named {dirname} found.")
 
-
-
+figstore = "/Users/lamoreau/Documents/ASpecfigs/"
+os.makedirs(figstore[0:-1], exist_ok=True)
 #Uncomment to see disperser options
 #print(JWST_disp_dict.keys())
 
@@ -175,11 +176,117 @@ if __name__ == "__main__":
     #we are officially twinning!!!!
 
 
-
-
     import numpy as np
     from scipy import signal
     from scipy.interpolate import interp1d
+
+    def bin_to_pixels(wave_hr, flux_hr, pix_edges):
+        """
+        Bin a high-resolution spectrum onto JWST-like pixels in a 
+        flux-conserving way using cumulative trapezoidal integration.
+
+        Parameters
+        ----------
+        wave_hr : array
+            High-res wavelength grid (must be strictly increasing).
+        flux_hr : array
+            High-res flux values (after LSF convolution).
+        pix_edges : array
+            Wavelength edges of pixels.
+
+        Returns
+        -------
+        pix_centers : array
+            Pixel central wavelengths.
+        binned_flux : array
+            Average flux density per pixel.
+        """
+        # cumulative integral of flux over wavelength
+        dl = np.diff(wave_hr)
+        seg_area = 0.5 * (flux_hr[:-1] + flux_hr[1:]) * dl
+        cumI = np.concatenate(([0.0], np.cumsum(seg_area)))
+
+        # fast linear interpolation of cumulative integral at pixel edges
+        I_edges = np.interp(pix_edges, wave_hr, cumI, left=0.0, right=cumI[-1])
+
+        # difference gives integrated flux in each pixel
+        pixel_areas = np.diff(I_edges)
+        pixel_widths = np.diff(pix_edges)
+        binned_flux = pixel_areas / pixel_widths
+
+        # pixel centers
+        pix_centers = 0.5 * (pix_edges[:-1] + pix_edges[1:])
+
+        return pix_centers, binned_flux
+
+
+    # wavelength grid that matches your dispersion table
+    wave_hr = test_disp.wavelength       # make sure your class has this
+    dlds    = test_disp.dlds       # Δλ per pixel (micron/pixel)
+    R_hr    = test_disp.respow     # resolving power array
+
+    # --- Construct high-res input spectrum ---
+    flux_hr = 0.2 + 0.02*np.sin(10*wave_hr)  # baseline continuum wiggles
+
+    # add random emission lines
+    rng = np.random.default_rng(42)
+    line_positions = rng.uniform(0.7, 5.0, 20)
+    for lam0 in line_positions:
+        flux_hr += 1.0 * np.exp(-0.5*((wave_hr-lam0)/1e-4)**2)
+
+    # FWHM and sigma for LSF from R(λ)
+    FWHM_hr  = wave_hr / R_hr
+    sigma_hr = FWHM_hr / (2 * np.sqrt(2 * np.log(2)))
+
+    def convolve_locally(wave, flux, sigma_lambda):
+        """Gaussian convolution with wavelength-dependent sigma."""
+        n = len(wave)
+        out = np.zeros_like(flux)
+        chunk = 2000
+        for i0 in range(0, n, chunk):
+            i1 = min(n, i0 + chunk)
+            ww = wave[i0:i1]
+            ff = flux[i0:i1]
+            sig = np.median(sigma_lambda[i0:i1])
+            dl  = np.mean(np.diff(ww))
+            half_npix = int(np.ceil(8 * sig / dl))
+            kx = np.arange(-half_npix, half_npix + 1) * dl
+            kernel = np.exp(-0.5 * (kx / sig) ** 2)
+            kernel /= np.sum(kernel)
+            padded = np.pad(ff, half_npix, mode='constant', constant_values=0.0)
+            conv   = signal.fftconvolve(padded, kernel, mode='same')
+            out[i0:i1] = conv[half_npix:-half_npix]
+        return out
+
+    conv_flux_hr = convolve_locally(wave_hr, flux_hr, sigma_hr)
+
+    # Build pixel grid directly from dlds (flux-conserving bins)
+    pix_edges = [wave_hr[0]]
+    lam = wave_hr[0]
+    while lam < wave_hr[-1]:
+        idx = np.searchsorted(wave_hr, lam)
+        if idx >= len(dlds):
+            break
+        step = dlds[idx]
+        lam += step
+        pix_edges.append(lam)
+    pix_edges = np.array(pix_edges)
+    #pix_centers = 0.5 * (pix_edges[:-1] + pix_edges[1:])
+
+    pix_centers, binned_flux = bin_to_pixels(test_disp.wavelength, flux_hr, pix_edges)
+
+        # --- Plot ---
+    plt.figure(figsize=(10,5))
+    plt.plot(wave_hr, flux_hr, color="gray", alpha=0.6, label="High-res input")
+    plt.plot(wave_hr, conv_flux_hr, color="blue", lw=1, label="After LSF convolution")
+    plt.step(pix_centers, binned_flux, where="mid", color="red", label="Binned to NIRSpec pixels")
+    plt.xlabel("Wavelength (μm)")
+    plt.ylabel("Flux (arb. units)")
+    plt.title("JWST NIRSpec PRISM Resolution & Binning (Speed Up)")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("/Users/lamoreau/Documents/ASpecfigs/JWST NIRSpec PRISM Resolution & Binning (Speed Up)", transparent = True)
+    
 
     # wavelength grid that matches your dispersion table
     wave_hr = test_disp.wavelength       # make sure your class has this
@@ -236,12 +343,35 @@ if __name__ == "__main__":
 
     # Bin convolved spectrum into pixels
     interp_flux = interp1d(wave_hr, conv_flux_hr, bounds_error=False, fill_value=0.0)
-    binned_flux = np.array([
-        np.trapz(interp_flux([pix_edges[i], pix_edges[i+1]]),
-                 [pix_edges[i], pix_edges[i+1]]) /
-        (pix_edges[i+1] - pix_edges[i])
-        for i in range(len(pix_centers))
-    ])
+    
+    ######
+    # trying to utelize binning that is based on the subgrid scale that I already have.
+    
+    # (1) sanity checks #do I need this and what is the slowdown?
+    if not np.all(np.diff(wave_hr) > 0):
+        raise ValueError("wave_hr must be strictly increasing")
+
+    # (2) build cumulative integral using trapezoidal rule
+    # area of each small segment between wave_hr[i] and wave_hr[i+1]
+    dl = np.diff(wave_hr)                               # length N-1
+    seg_area = 0.5 * (conv_flux_hr[:-1] + conv_flux_hr[1:]) * dl  # length N-1
+    cumI = np.concatenate(([0.0], np.cumsum(seg_area))) # length N ; cumI[i] = integral from wave_hr[0] to wave_hr[i]
+
+    # (3) make an interpolator for the cumulative integral vs wavelength
+    cumI_interp = interp1d(wave_hr, cumI, kind='linear',
+                        bounds_error=False,
+                        fill_value=(0.0, cumI[-1]), assume_sorted=True)
+
+    # (4) evaluate cumulative integral at pixel edges, then take differences
+    I_edges = cumI_interp(pix_edges)            # length M+1 if pix_edges length M+1
+    pixel_areas = np.diff(I_edges)              # integral within each pixel
+    pixel_widths = np.diff(pix_edges)
+    binned_flux = pixel_areas / pixel_widths    # average flux density inside each pixel
+
+    #######
+
+    # binned_flux corresponds to pixels with centers
+    pix_centers = 0.5*(pix_edges[:-1] + pix_edges[1:])
 
     print(f"Simulated {len(pix_centers)} NIRSpec pixels "
           f"from {pix_centers[0]:.2f} to {pix_centers[-1]:.2f} μm")
@@ -275,7 +405,7 @@ if __name__ == "__main__":
     plt.step(pix_centers, binned_flux, where="mid", color="red", label="Binned to NIRSpec pixels")
     plt.xlabel("Wavelength (μm)")
     plt.ylabel("Flux (arb. units)")
-    plt.title("JWST NIRSpec PRISM Resolution & Binning")
+    plt.title("JWST NIRSpec PRISM Resolution & Binning (Original)")
     plt.legend()
     plt.tight_layout()
-    plt.show()
+    plt.savefig(f"{figstore}JWST NIRSpec PRISM Resolution & Binning (Original)", transparent = True)
