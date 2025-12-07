@@ -8,6 +8,7 @@ from scipy import signal
 from scipy.interpolate import interp1d
 import astropy.units as u
 
+#ham
 #for now I am locally defining this across the board but I should make this its own thing in a file.io function library
 def searcher(start_path, dirname):
     # Start from a high-level but not-too-huge root directory
